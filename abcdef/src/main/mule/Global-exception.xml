@@ -78,7 +78,7 @@ output application/json
 		<logger level="INFO" doc:name="Logger" doc:id="79a6d1fb-9a9a-46c9-bedc-5fc391b9c081" message="call notification"/>
 		<email:send doc:name="Send" doc:id="c8653304-df76-45c3-8b9b-1d64bf5f2537" config-ref="Email_SMTP" fromAddress="iamdp316@gmail.com" subject="[error in API]" >
 			<email:to-addresses >
-				<email:to-address value="iamdp316@gmail.com" />
+				<email:to-address value="durgaprasadbudi6@gmail.com" />
 			</email:to-addresses>
 			<email:body contentType="test/plain" />
 		</email:send>
