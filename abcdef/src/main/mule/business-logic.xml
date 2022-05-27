@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="selectFlow" doc:id="2fbc94da-6f41-425b-bc88-7e3faf8721d2" >
+		<until-successful maxRetries="${retry}" doc:name="Until Successful" doc:id="176b19b6-618c-4c6d-b2c1-8b4f5d144bf3" millisBetweenRetries="${time}">
+			<try doc:name="Try" doc:id="a7c5b3dc-ace3-43e0-87c8-4985a05d19d1" >
+				<db:select doc:name="Select" doc:id="a07ee56a-2398-428e-b560-a0e0469e1018" config-ref="Database_Config">
+				<db:sql><![CDATA[SELECT * FROM iamdp.location where ename= :eskill;]]></db:sql>
+				<db:input-parameters><![CDATA[#[{
+	"eskill":attributes.queryParams.dept
+}]]]></db:input-parameters>
+			</db:select>
+				<error-handler >
+					<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a2412f97-66e6-479b-9071-2f7f61160e1e" >
+						<logger level="INFO" doc:name="Logger" doc:id="df605148-ba96-4ee4-ae24-9e1fd4a55f68" message="connector level issue"/>
+						<ee:transform doc:name="Transform Message" doc:id="e21e6382-e8d0-4d67-a0d8-e014bd3ee8e3" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status":500,
+	"issue":"thias is some data base issue"
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</on-error-propagate>
+				</error-handler>
+			</try>
+		</until-successful>
+		<logger level="INFO" doc:name="Logger" doc:id="727b7a07-9ae8-4393-9457-aa714ff358e9" message="#[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="e184458b-e36d-43ee-a5d9-9b89bdc62cbf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="insertflow" doc:id="44e1eb03-acf4-4ac3-8e82-f884ed4aefa0" >
+		<until-successful maxRetries="${retry}" doc:name="Until Successful" doc:id="b0973024-b1a9-4db7-8509-9b5d6d3623a4" millisBetweenRetries="${time}">
+			<db:insert doc:name="Insert" doc:id="7b7f83fc-c4b5-4c22-968e-6275d2e142cd" config-ref="Database_Config" >
+				<db:sql ><![CDATA[INSERT INTO `iamdp`.`location` (`eid`, `ename`) VALUES (:eid, :ename);]]></db:sql>
+				<db:input-parameters ><![CDATA[#[{
+	"eid":payload.empid,
+	"ename":payload.empname
+}]]]></db:input-parameters>
+			</db:insert>
+		</until-successful>
+		<logger level="INFO" doc:name="Logger" doc:id="c87331d1-4002-4b43-9960-a611a934b9fa" />
+		<ee:transform doc:name="Transform Message" doc:id="183aaaba-feab-4e84-92ae-2fbf1ed42cdb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="dleteflow" doc:id="bf51a025-31dd-4eb4-9cea-1aa068fe982c" >
+		<until-successful maxRetries="${retry}" doc:name="Until Successful" doc:id="6c790494-a27b-4f5b-a210-3b902153542e" millisBetweenRetries="${time}">
+			<db:delete doc:name="Delete" doc:id="e7227b57-667d-42a0-b678-401b89196ba0" config-ref="Database_Config" >
+				<db:sql ><![CDATA[DELETE FROM `iamdp`.`location` WHERE (eid = :eskill);]]></db:sql>
+				<db:input-parameters ><![CDATA[#[{
+	"eskill":attributes.queryParams.dept
+}]]]></db:input-parameters>
+			</db:delete>
+		</until-successful>
+		<logger level="INFO" doc:name="Logger" doc:id="c08b7d77-1d3a-4e3f-bb1d-0f1407aa7b28" />
+		<ee:transform doc:name="Transform Message" doc:id="b8e767e4-8c03-4357-8eed-7585e7007a99" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="updateflow" doc:id="7ef7efe0-c8b0-4215-903c-7df73aa0821b" >
+		<until-successful maxRetries="${retry}" doc:name="Until Successful" doc:id="9280989c-f8d4-466d-bc80-8d2a34e2e97e" millisBetweenRetries="${time}">
+			<db:update doc:name="Update" doc:id="69395a9f-e566-4321-88bc-44abb0084764" config-ref="Database_Config" >
+				<db:sql ><![CDATA[UPDATE `iamdp`.`location` SET `eid` = '103' WHERE (`eid` = '161');]]></db:sql>
+			</db:update>
+		</until-successful>
+		<logger level="INFO" doc:name="Logger" doc:id="07810b7f-1fab-4427-b916-a02bb83db03f" />
+		<ee:transform doc:name="Transform Message" doc:id="03648be6-4bb8-4933-b94c-53f49eef36e6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

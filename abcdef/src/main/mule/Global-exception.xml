@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="011f3751-9c61-4640-8a54-b95be9308183" >
+		<email:smtp-connection host="smtp.gmail.com" port="587" user="iamdp316@gmail.com" password="xhqhimssvrbsjtaq" >
+			<email:properties >
+				<email:property key="mail.smtp.starttls.enable" value="true" />
+			</email:properties>
+		</email:smtp-connection>
+	</email:smtp-config>
+	<error-handler name="Global-exceptionError_Handler" doc:id="06729652-0343-4ec1-9acc-29f53a993c67" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="81558daf-fd5c-4857-a136-f9e4655aa32f" type="DB:BAD_SQL_SYNTAX, DB:CONNECTIVITY, DB:QUERY_EXECUTION" >
+			<logger level="INFO" doc:name="Logger" doc:id="3535e24e-1662-429e-b267-f416326b4bf1" message="error flow" />
+			<ee:transform doc:name="Copy_of_Transform Message" doc:id="3a1cc597-1598-4efa-8f2f-e9c1de4f29bd" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status":500,
+	"issue":"this is some db issue, developer try to fix it as soon as possible"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="553760a0-0d64-43ef-8927-951853d10b09" name="Notification_Flow"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1b7a6b0b-cbae-45f7-af99-d457883fe469" type="MULE:EXPRESSION" >
+			<logger level="INFO" doc:name="Logger" doc:id="758a46b5-4eec-4595-ad84-30f20ce4ea81" message="error flow" />
+			<ee:transform doc:name="Copy_of_Transform Message" doc:id="8fd3bc90-7774-4665-9e05-be6679848c04" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status":500,
+	"issue":"code level issue"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="6279ea88-4656-4d97-b782-f7daea2d9da2" name="Notification_Flow"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="c7f7ea15-99f3-4c7b-88ff-8755b5b7d9e1" type="INVALID:DEPT_ID">
+			<logger level="INFO" doc:name="Logger" doc:id="fa39171b-2f24-4233-b18d-af2d39543a40" />
+			<ee:transform doc:name="Transform Message" doc:id="6b3d7557-798e-46bb-a405-31913aa3b433" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/jSON
+---
+{
+	"status":500,
+	"issue":"invalid dept id"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="5532d474-d6a0-4be9-931d-1fdec86fac2c" name="Notification_Flow"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="47588a0f-3567-4ae7-abb7-c1dfc997f5a2" type="ANY">
+			<logger level="INFO" doc:name="Logger" doc:id="f1ab64dc-4b9d-4531-91f2-3f3abd118bb1" />
+			<ee:transform doc:name="Transform Message" doc:id="d6498b91-9467-4914-9d21-e8e486a206d0" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status":500,
+	"issue":"this is some other issue"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="ea3b3d28-f5ce-457c-b37b-2b72ec2f068f" name="Notification_Flow"/>
+		</on-error-propagate>
+	</error-handler>
+	<sub-flow name="Notification_Flow" doc:id="87e88d23-f5a9-4e50-bc57-4062b608c687" >
+		<logger level="INFO" doc:name="Logger" doc:id="79a6d1fb-9a9a-46c9-bedc-5fc391b9c081" message="call notification"/>
+		<email:send doc:name="Send" doc:id="c8653304-df76-45c3-8b9b-1d64bf5f2537" config-ref="Email_SMTP" fromAddress="iamdp316@gmail.com" subject="[error in API]" >
+			<email:to-addresses >
+				<email:to-address value="iamdp316@gmail.com" />
+			</email:to-addresses>
+			<email:body contentType="test/plain" />
+		</email:send>
+	</sub-flow>
+</mule>
